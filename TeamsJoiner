@@ -8,7 +8,6 @@ block = np.array([['Advisory', 'Gov', 'AP Lit','APES'],    #name of class
  					['09:45', '09:25',  '10:35', '13:15']])  #end time
 			
 thumb = np.array(['thumb0.png', 'thumb1.png', 'thumb2.png', 'thumb3.png']) #thumbnails for each class
-title = np.array(['title0.png', 'title1.png', 'title2.png', 'title3.png']) #the thing on the side where the meetings are held
 
 
 #------------HELPER FUNCTIONS--------------
@@ -21,7 +20,7 @@ def write(targetWord):
 #finds and clicks on given image
 def click(button):
 		buttonLocation = py.locateCenterOnScreen(button, confidence= 0.85)
-		py.click(buttonLocation[0]*0.5, buttonLocation[1]*0.5)
+		py.click(buttonLocation[0]*0.5, buttonLocation[1]*0.5) #need to multiply by half cuz Mac screen resolution is weird and has twice the amount of pixels than it says it has
 
 
 
@@ -32,7 +31,7 @@ def openTeams():
 	py.hotkey('command', 'space')
 	write('Microsoft Teams')
 	py.press('enter')
-	time.sleep(5)
+	time.sleep(3)
 
 #uses mac shortcut to quit app
 def closeTeams():
@@ -41,13 +40,14 @@ def closeTeams():
 #Clicks first thumbnail, then clicks to join the meeting	
 def joinClass(num, now):
 	while True:
-		now = time.strftime('%H:%M', time.localtime())
-		if now < block[1, num]:
+		now = time.strftime('%H:%M', time.localtime()) #checks the time and outputs a string in the format hours:minutes ex. 14:32 = 2:32 pm
+		if now < block[1, num]:       
 			print('waiting for ' + block[0,num] + ' to start...')
-			time.sleep(30)
+			time.sleep(29)
 
 		elif now >= block[1, num] and now < block[2, num]:
 			print ('time to start ' +  block[0, num])
+			openTeams()
 			print ('looking for thumbnail')
 			while True:
 				if py.locateOnScreen(thumb[num], confidence = 0.8) is not None:
@@ -70,28 +70,30 @@ def joinClass(num, now):
 				if py.locateOnScreen('joinNow.png', confidence = 0.8) is not None:
 					click('joinNow.png')
 					print (block[0,num] + ' joined')
+					print('but like whens this shit gettin over??')
 					break
 
 			break
 
 
 
-#Exits meeting using close window shortcut and returns to teams home screen
+#Exits meeting and returns to teams home screen to await next class
 def leaveClass(num, now):
-	now = time.strftime('%H:%M', time.localtime())
+	openTeams()
 	while True:
 		if now >= block[2, num]:
 			while True:
 				if py.locateOnScreen('leave.png', confidence = 0.8) is not None:
 					click('leave.png')
 					time.sleep(1)
-					print('left gov')
+					print('left ' + block[0, num] + ', thank God')
 
 				if py.locateOnScreen('allTeams.png', confidence = 0.8) is not None:
 					click('allTeams.png')
 					break
 			break
 		time.sleep(59)
+		now = time.strftime('%H:%M', time.localtime())
 
 
 
@@ -121,8 +123,8 @@ while True:
 
 		closeTeams()
 		
-	else:                           #if school is over, dont keep waiting for next class and instead check ever 2 hours
-		print('Class only starts tomorrow, Im tryna sleep. zzzz....')
+	else:                           #if school is over, dont keep waiting for next class and instead check every 2 hours
+		print('Class only starts tomorrow bruh, relax. Imma get some sleep. zzzz....')
 		time.sleep(7200)
 
 
