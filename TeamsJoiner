@@ -7,19 +7,21 @@ block = np.array([['Advisory', 'Gov', 'AP Lit','APES'],    #name of class
  					['09:15',  '08:30', '09:40','12:20'],  #start time
  					['09:45', '09:25',  '10:35', '13:15']])  #end time
 			
-thumb = np.array(['thumb0.png', 'thumb1.png', 'thumb2.png', 'thumb3.png'])
-title = np.array(['title0.png', 'title1.png', 'title2.png', 'title3.png'])
+thumb = np.array(['thumb0.png', 'thumb1.png', 'thumb2.png', 'thumb3.png']) #thumbnails for each class
+title = np.array(['title0.png', 'title1.png', 'title2.png', 'title3.png']) #the thing on the side where the meetings are held
 
 
 #------------HELPER FUNCTIONS--------------
+#writes words based on targetWord
 def write(targetWord):
 	stringLetters = [char for char in targetWord]
 	for char in stringLetters:
 		py.press(char)
 
+#finds and clicks on given image
 def click(button):
-		buttonLocation = py.locateOnScreen(button, confidence= 0.85)
-		py.click(buttonLocation[0]+1, buttonLocation[1]+1)
+		buttonLocation = py.locateCenterOnScreen(button, confidence= 0.85)
+		py.click(buttonLocation[0]*0.5, buttonLocation[1]*0.5)
 
 
 
@@ -32,12 +34,14 @@ def openTeams():
 	py.press('enter')
 	time.sleep(5)
 
+#uses mac shortcut to quit app
 def closeTeams():
 	py.hotkey('command', 'q')
 	
 #Clicks first thumbnail, then clicks to join the meeting	
 def joinClass(num, now):
 	while True:
+		now = time.strftime('%H:%M', time.localtime())
 		if now < block[1, num]:
 			print('waiting for ' + block[0,num] + ' to start...')
 			time.sleep(30)
@@ -46,28 +50,24 @@ def joinClass(num, now):
 			print ('time to start ' +  block[0, num])
 			print ('looking for thumbnail')
 			while True:
-				if py.locateOnScreen(thumb[num]) is not None:
+				if py.locateOnScreen(thumb[num], confidence = 0.8) is not None:
 					click(thumb[num])
 					print ('thumbnail clicked')
 					time.sleep(1)
-					print('looking for class title...')
-					break
-			while True:
-				if py.locateOnScreen(title[num]) is not None:
-					click(title[num])
-					print('title clicked')
-					time.sleep(1)
+					py.press('down')
+					time.sleep(0.1)
+					py.press('enter')
 					print('looking for join button...')
 					break
 			while True:
-				if py.locateOnScreen('join.png') is not None:
+				if py.locateOnScreen('join.png', confidence = 0.8) is not None:
 					click('join.png')
 					print ('join button clicked')
 					time.sleep(1)
 					print('looking for join now button...')
 					break
 			while True:
-				if py.locateOnScreen('joinNow.png') is not None:
+				if py.locateOnScreen('joinNow.png', confidence = 0.8) is not None:
 					click('joinNow.png')
 					print (block[0,num] + ' joined')
 					break
@@ -78,20 +78,25 @@ def joinClass(num, now):
 
 #Exits meeting using close window shortcut and returns to teams home screen
 def leaveClass(num, now):
+	now = time.strftime('%H:%M', time.localtime())
 	while True:
 		if now >= block[2, num]:
-			py.hotkey('command','w')
-			time.sleep(3)
 			while True:
-				if py.locateOnScreen('allTeams.png') is not None:
+				if py.locateOnScreen('leave.png', confidence = 0.8) is not None:
+					click('leave.png')
+					time.sleep(1)
+					print('left gov')
+
+				if py.locateOnScreen('allTeams.png', confidence = 0.8) is not None:
 					click('allTeams.png')
 					break
+			break
 		time.sleep(59)
-		break
 
 
 
 #---------------ATTENDING CLASSES------------------
+
 while True:
 	rightNow = time.strftime('%H:%M', time.localtime())
 	today = time.strftime('%w', time.localtime())
@@ -110,13 +115,13 @@ while True:
 				break
 
 
-		for x in range(begClass,4):     
+		for x in range(begClass,4):   #runs through join and leave functions for each block
 			joinClass(x, rightNow)
 			leaveClass(x, rightNow)
 
 		closeTeams()
 		
-	else:
+	else:                           #if school is over, dont keep waiting for next class and instead check ever 2 hours
 		print('Class only starts tomorrow, Im tryna sleep. zzzz....')
 		time.sleep(7200)
 
