@@ -1,0 +1,123 @@
+import time
+import pyautogui as py
+import numpy as np
+
+#--------------ARRAYS FOR CLASSES----------------
+block = np.array([['Advisory', 'Gov', 'AP Lit','APES'],    #name of class
+ 					['09:15',  '08:30', '09:40','12:20'],  #start time
+ 					['09:45', '09:25',  '10:35', '13:15']])  #end time
+			
+thumb = np.array(['thumb0.png', 'thumb1.png', 'thumb2.png', 'thumb3.png'])
+title = np.array(['title0.png', 'title1.png', 'title2.png', 'title3.png'])
+
+
+#------------HELPER FUNCTIONS--------------
+def write(targetWord):
+	stringLetters = [char for char in targetWord]
+	for char in stringLetters:
+		py.press(char)
+
+def click(button):
+		buttonLocation = py.locateOnScreen(button, confidence= 0.85)
+		py.click(buttonLocation[0]+1, buttonLocation[1]+1)
+
+
+
+#---------------FUNCTIONS--------------
+
+#Opens teams using spotlight search
+def openTeams():
+	py.hotkey('command', 'space')
+	write('Microsoft Teams')
+	py.press('enter')
+	time.sleep(5)
+
+def closeTeams():
+	py.hotkey('command', 'q')
+	
+#Clicks first thumbnail, then clicks to join the meeting	
+def joinClass(num, now):
+	while True:
+		if now < block[1, num]:
+			print('waiting for ' + block[0,num] + ' to start...')
+			time.sleep(30)
+
+		elif now >= block[1, num] and now < block[2, num]:
+			print ('time to start ' +  block[0, num])
+			print ('looking for thumbnail')
+			while True:
+				if py.locateOnScreen(thumb[num]) is not None:
+					click(thumb[num])
+					print ('thumbnail clicked')
+					time.sleep(1)
+					print('looking for class title...')
+					break
+			while True:
+				if py.locateOnScreen(title[num]) is not None:
+					click(title[num])
+					print('title clicked')
+					time.sleep(1)
+					print('looking for join button...')
+					break
+			while True:
+				if py.locateOnScreen('join.png') is not None:
+					click('join.png')
+					print ('join button clicked')
+					time.sleep(1)
+					print('looking for join now button...')
+					break
+			while True:
+				if py.locateOnScreen('joinNow.png') is not None:
+					click('joinNow.png')
+					print (block[0,num] + ' joined')
+					break
+
+			break
+
+
+
+#Exits meeting using close window shortcut and returns to teams home screen
+def leaveClass(num, now):
+	while True:
+		if now >= block[2, num]:
+			py.hotkey('command','w')
+			time.sleep(3)
+			while True:
+				if py.locateOnScreen('allTeams.png') is not None:
+					click('allTeams.png')
+					break
+		time.sleep(59)
+		break
+
+
+
+#---------------ATTENDING CLASSES------------------
+while True:
+	rightNow = time.strftime('%H:%M', time.localtime())
+	today = time.strftime('%w', time.localtime())
+	if int(today) == 1 and rightNow < block[2, 0]:  #On Monday, join and leave from Advisory at the right times but stop trying to join after advisory ends at 9:45
+		openTeams()
+		joinClass(0, rightNow)
+		leaveClass(0, rightNow)
+		closeTeams()
+		
+
+	elif (int(today)>1 and int(today) <6) and (rightNow < block[2, 3]): #On Tues through Fri, join and leave Blocks 1 2 and 3 at right times
+		openTeams()
+		for i in range(1, 4):         #compares current time to each class's end time to see what the next or current class is for the day
+			if rightNow < block[2, i]:
+				begClass = i
+				break
+
+
+		for x in range(begClass,4):     
+			joinClass(x, rightNow)
+			leaveClass(x, rightNow)
+
+		closeTeams()
+		
+	else:
+		print('Class only starts tomorrow, Im tryna sleep. zzzz....')
+		time.sleep(7200)
+
+
