@@ -4,7 +4,7 @@ import numpy as np
 
 #--------------ARRAYS FOR CLASSES----------------
 block = np.array([['Advisory', 'Gov', 'AP Lit','APES'],    #name of class
- 					['09:15',  '08:30', '09:40','12:20'],  #start time
+ 					['09:16',  '08:31', '09:41','12:21'],  #start time
  					['09:45', '09:25',  '10:35', '13:15']])  #end time
 			
 thumb = np.array(['thumb0.png', 'thumb1.png', 'thumb2.png', 'thumb3.png']) #thumbnails for each class
@@ -36,13 +36,16 @@ def openTeams():
 #uses mac shortcut to quit app
 def closeTeams():
 	py.hotkey('command', 'q')
+	print('\n')
 	
 #Clicks first thumbnail, then clicks to join the meeting	
 def joinClass(num, now):
+	now = time.strftime('%H:%M', time.localtime()) #checks the time and outputs a string in the format hours:minutes ex. 14:32 = 2:32 pm
+	if now < block[1, num]:       
+		print('\nwaiting for ' + block[0,num] + ' to start...')
 	while True:
 		now = time.strftime('%H:%M', time.localtime()) #checks the time and outputs a string in the format hours:minutes ex. 14:32 = 2:32 pm
-		if now < block[1, num]:       
-			print('waiting for ' + block[0,num] + ' to start...')
+		if now < block[1, num]:      
 			time.sleep(29)
 
 		elif now >= block[1, num] and now < block[2, num]:
@@ -59,6 +62,7 @@ def joinClass(num, now):
 					py.press('enter')
 					print('looking for join button...')
 					break
+					
 			while True:
 				if py.locateOnScreen('join.png', confidence = 0.8) is not None:
 					click('join.png')
@@ -73,44 +77,45 @@ def joinClass(num, now):
 					print('but like whens this shit gettin over??')
 					break
 
-			break
+			break 
 
 
 
 #Exits meeting and returns to teams home screen to await next class
 def leaveClass(num, now):
-	openTeams()
 	while True:
+		now = time.strftime('%H:%M', time.localtime())
 		if now >= block[2, num]:
-			while True:
+			for i in range(0,10):
 				if py.locateOnScreen('leave.png', confidence = 0.8) is not None:
 					click('leave.png')
 					time.sleep(1)
 					print('left ' + block[0, num] + ', thank God')
-
+					break
+			while True:
 				if py.locateOnScreen('allTeams.png', confidence = 0.8) is not None:
 					click('allTeams.png')
 					break
 			break
 		time.sleep(59)
-		now = time.strftime('%H:%M', time.localtime())
+		
 
 
 
 #---------------ATTENDING CLASSES------------------
+alreadySaid = False    #used to prevent repetition of print statements
 
 while True:
 	rightNow = time.strftime('%H:%M', time.localtime())
 	today = time.strftime('%w', time.localtime())
 	if int(today) == 1 and rightNow < block[2, 0]:  #On Monday, join and leave from Advisory at the right times but stop trying to join after advisory ends at 9:45
-		openTeams()
 		joinClass(0, rightNow)
 		leaveClass(0, rightNow)
 		closeTeams()
+		alreadySaid = False
 		
 
 	elif (int(today)>1 and int(today) <6) and (rightNow < block[2, 3]): #On Tues through Fri, join and leave Blocks 1 2 and 3 at right times
-		openTeams()
 		for i in range(1, 4):         #compares current time to each class's end time to see what the next or current class is for the day
 			if rightNow < block[2, i]:
 				begClass = i
@@ -122,9 +127,21 @@ while True:
 			leaveClass(x, rightNow)
 
 		closeTeams()
-		
+		alreadySaid = False
+	
+	elif (int(today) == 5 or int(today) == 6):  #if its the weekend, dont keep waiting for next class and instead check every 2 hours
+		if alreadySaid == False:   #don't repeat the statement and instead say it once and then keep waiting
+			print('There is no school tomorrow homie...')
+			time.sleep(7200)
+			alreadySaid = True
+		else:
+			time.sleep(7200)	
 	else:                           #if school is over, dont keep waiting for next class and instead check every 2 hours
-		print('Class only starts tomorrow bruh, relax. Imma get some sleep. zzzz....')
-		time.sleep(7200)
+		if alreadySaid == False:
+			print('\nClass only starts tomorrow bruh, relax. Imma get some sleep. zzzz....')
+			time.sleep(7200)
+			alreadySaid = True
+		else:
+			time.sleep(7200)
 
 
